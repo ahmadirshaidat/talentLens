@@ -1,0 +1,31 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# --- Secrets ---
+.env
+!.env.example
+
+# --- AI service data (CVs, indexes) ---
+ai-service/sample_cvs/*
+!ai-service/sample_cvs/.gitkeep
+ai-service/data/*
+!ai-service/data/.gitkeep
+
+# --- .NET ---
+bin/
+obj/
+.vs/
+*.user
+web/TalentLens.Web/wwwroot/uploads/
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="TalentLens.Domain/TalentLens.Domain.csproj" />
+  <Project Path="TalentLens.Infrastructure/TalentLens.Infrastructure.csproj" />
+  <Project Path="TalentLens.Web/TalentLens.Web.csproj" />
+</Solution>
