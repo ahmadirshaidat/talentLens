@@ -1,0 +1,42 @@
+@model Candidate
+@{
+    ViewData["Title"] = Model.DisplayName;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">@T["TalentPool"]</a></li>
+        <li class="breadcrumb-item active" dir="auto">@Model.DisplayName</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h1 class="h4 mb-1" dir="auto">@Model.DisplayName</h1>
+        @if (Model.JobTitles.Count > 0) { <div class="text-muted" dir="auto">@string.Join(" · ", Model.JobTitles)</div> }
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <partial name="_StatusBadge" model="Model.Status" />
+        <a class="btn btn-sm btn-outline-secondary" asp-action="Download" asp-route-id="@Model.Id">📄 @T["DownloadCv"]</a>
+        @if (Model.Status is ProcessingStatus.Failed or ProcessingStatus.Ready)
+        {
+            <form asp-action="Retry" asp-route-id="@Model.Id" method="post" class="d-inline">
+                <button class="btn btn-sm btn-outline-primary" type="submit">@T["Reprocess"]</button>
+            </form>
+        }
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline" data-confirm="@T["ConfirmDelete"]">
+            <button class="btn btn-sm btn-outline-danger" type="submit">@T["Delete"]</button>
+        </form>
+    </div>
+</div>
+
+@if (Model.Status == ProcessingStatus.Failed)
+{
+    <div class="alert alert-danger"><strong>@T["ProcessingFailed"]</strong><div class="small tl-prewrap">@Model.Error</div></div>
+}
+else if (Model.Status != ProcessingStatus.Ready)
+{
+    <div class="alert alert-info" data-auto-refresh="4000">@T["StillProcessing"]</div>
+}
+
+<partial name="_ProfileFacts" model="Model" />

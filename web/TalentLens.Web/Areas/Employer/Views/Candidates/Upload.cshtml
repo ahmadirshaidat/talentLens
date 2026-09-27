@@ -1,0 +1,28 @@
+@using Microsoft.Extensions.Options
+@using TalentLens.Infrastructure.Storage
+@inject IOptions<StorageOptions> StorageOptions
+@{
+    ViewData["Title"] = T["UploadCvs"];
+}
+
+<h1 class="h4 mb-2">@T["UploadCvs"]</h1>
+<p class="small text-muted">@T["TalentPoolHint"]</p>
+
+<form asp-action="Upload" method="post" enctype="multipart/form-data" id="upload-form">
+    <label for="files" class="tl-dropzone d-block text-center p-5 rounded-4 mb-3" id="dropzone">
+        <div class="fs-1 mb-2">📄</div>
+        <div class="fw-semibold">@T["DropHere"]</div>
+        <div class="small text-muted">@T.F("UploadHint", StorageOptions.Value.MaxUploadMb)</div>
+        <input type="file" id="files" name="files" multiple accept=".pdf,.docx" class="visually-hidden" />
+    </label>
+    <ul class="list-group mb-3" id="file-list"></ul>
+    <button type="submit" class="btn btn-primary" id="upload-button" disabled>
+        <span class="spinner-border spinner-border-sm me-1 d-none" aria-hidden="true"></span>
+        @T["UploadAndProcess"]
+    </button>
+</form>
+
+<div class="alert alert-light border mt-4 small">
+    <strong>@T["WhatHappensNext"]</strong>
+    <p class="mb-0">@T["WhatHappensNextText"]</p>
+</div>

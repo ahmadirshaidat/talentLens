@@ -102,6 +102,21 @@ class VectorStore:
             )
         ]
 
+    def get_chunks(self, workspace_id: str, chunk_ids: list[str]) -> list[Chunk]:
+        """Fetch chunks by id (missing ids are skipped), in the order requested."""
+        if not chunk_ids:
+            return []
+        result = self._collection(workspace_id).get(
+            ids=chunk_ids, include=["documents", "metadatas"]
+        )
+        by_id = {
+            chunk_id: self._to_chunk(chunk_id, doc, meta)
+            for chunk_id, doc, meta in zip(
+                result["ids"], result["documents"], result["metadatas"], strict=True
+            )
+        }
+        return [by_id[cid] for cid in chunk_ids if cid in by_id]
+
     def delete_candidate(self, workspace_id: str, candidate_id: str) -> None:
         self._collection(workspace_id).delete(where={"candidate_id": candidate_id})
         logger.info("Deleted vectors for candidate %s in workspace %s", candidate_id, workspace_id)

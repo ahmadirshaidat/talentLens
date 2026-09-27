@@ -3,6 +3,8 @@
 import logging
 import sys
 
+from app.observability import RequestIdFilter
+
 
 def setup_logging(level: str = "INFO") -> None:
     """Configure root logging once: timestamped lines to stdout."""
@@ -11,6 +13,9 @@ def setup_logging(level: str = "INFO") -> None:
         root.setLevel(level.upper())
         return
     handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-7s %(name)s: %(message)s"))
+    handler.addFilter(RequestIdFilter())
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)-7s [%(request_id)s] %(name)s: %(message)s")
+    )
     root.addHandler(handler)
     root.setLevel(level.upper())

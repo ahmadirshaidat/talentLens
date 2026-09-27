@@ -1,0 +1,160 @@
+@model JobDetailsViewModel
+@{
+    var job = Model.Job;
+    var company = job.Company!; // loaded with Include() by JobsController.Details
+    ViewData["Title"] = job.Title;
+    var returnUrl = $"{Context.Request.Path}";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">@T["FindJobs"]</a></li>
+        <li class="breadcrumb-item active" dir="auto">@job.Title</li>
+    </ol>
+</nav>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex gap-3 align-items-start">
+                    <partial name="_CompanyLogo" model="company" />
+                    <div class="flex-grow-1">
+                        <h1 class="h4 mb-1" dir="auto">@job.Title</h1>
+                        <div class="text-muted" dir="auto">
+                            <a asp-controller="Companies" asp-action="Details" asp-route-id="@job.CompanyId">@company.Name</a>
+                            · @(job.Location ?? T["WorkplaceRemote"]) · @T.Ago(job.PublishedAt ?? job.CreatedAt)
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <span class="badge tl-tag">@T[$"Type{job.EmploymentType}"]</span>
+                    <span class="badge tl-tag">@T[$"Workplace{job.WorkplaceType}"]</span>
+                    @if (job.MinYearsExperience is int y && y > 0)
+                    {
+                        <span class="badge tl-tag">@T.F("YearsPlus", y)</span>
+                    }
+                    @if (job.SalaryMin is not null || job.SalaryMax is not null)
+                    {
+                        <span class="badge tl-tag">💰 @job.SalaryMin?.ToString("N0")@(job.SalaryMax is null ? "+" : $" – {job.SalaryMax:N0}") @job.Currency</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h2 class="h6">@T["JobDescription"]</h2>
+                <p class="tl-prewrap" dir="auto">@job.Description</p>
+                @if (!string.IsNullOrWhiteSpace(job.Requirements))
+                {
+                    <h2 class="h6 mt-4">@T["Requirements"]</h2>
+                    <p class="tl-prewrap" dir="auto">@job.Requirements</p>
+                }
+                @if (job.Skills.Count > 0)
+                {
+                    <h2 class="h6 mt-4">@T["Skills"]</h2>
+                    <partial name="_Chips" model="job.Skills" />
+                }
+            </div>
+        </div>
+
+        @if (Model.MoreFromCompany.Count > 0)
+        {
+            <h2 class="h6 mb-3">@T.F("MoreJobsAt", company.Name)</h2>
+            @foreach (var other in Model.MoreFromCompany)
+            {
+                other.Company = company;
+                <partial name="_JobCard" model="other" />
+            }
+        }
+    </div>
+
+    <aside class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4 tl-apply-card">
+            <div class="card-body p-4">
+                @if (Model.MyApplication is { } app)
+                {
+                    <h2 class="h6">@T["YouApplied"]</h2>
+                    <p class="small text-muted mb-2">@T.Ago(app.AppliedAt)</p>
+                    <partial name="_ApplicationStatusBadge" model="app.Status" />
+                    <a class="d-block mt-3 small" asp-area="Seeker" asp-controller="Applications" asp-action="Index">@T["TrackApplications"] →</a>
+                }
+                else if (Model.IsSeeker)
+                {
+                    <h2 class="h6">@T["ApplyForJob"]</h2>
+                    @if (Model.Profile is { HasCv: false })
+                    {
+                        <p class="small text-muted">@T["ApplyNeedsCv"]</p>
+                        <a class="btn btn-primary w-100" asp-area="Seeker" asp-controller="Profile" asp-action="Index">@T["UploadCv"]</a>
+                    }
+                    else
+                    {
+                        <form asp-action="Apply" asp-route-id="@job.Id" method="post">
+                            <label for="coverLetter" class="form-label small text-muted">@T["CoverLetterOptional"]</label>
+                            <textarea id="coverLetter" name="coverLetter" rows="4" maxlength="4000" class="form-control mb-3" dir="auto"></textarea>
+                            <button class="btn btn-accent w-100" type="submit">@T["ApplyNow"]</button>
+                        </form>
+                    }
+                }
+                else if (!User.Identity!.IsAuthenticated)
+                {
+                    <h2 class="h6">@T["ApplyForJob"]</h2>
+                    <p class="small text-muted">@T["SignInToApply"]</p>
+                    <a class="btn btn-accent w-100 mb-2" asp-controller="Account" asp-action="Register">@T["CreateFreeProfile"]</a>
+                    <a class="btn btn-outline-primary w-100" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl">@T["Login"]</a>
+                }
+                else
+                {
+                    <p class="small text-muted mb-0">@T["OnlySeekersApply"]</p>
+                }
+
+                @if (Model.IsSeeker)
+                {
+                    <form asp-action="ToggleSave" asp-route-id="@job.Id" method="post" class="mt-3">
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <button class="btn btn-sm btn-outline-secondary w-100">@(Model.IsSaved ? "★ " + T["Unsave"] : "☆ " + T["Save"])</button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        @if (Model.IsSeeker)
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h2 class="h6">@T["HowWellYouMatch"]</h2>
+                    <p class="small text-muted">@T["MatchHint"]</p>
+                    <div id="match-result"></div>
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-outline-primary w-100" data-ajax-post="@Url.Action("Match", new { id = job.Id })"
+                            data-ajax-target="#match-result" disabled="@(Model.Profile?.CvReady != true)">
+                        <span class="spinner-border spinner-border-sm me-1 d-none" aria-hidden="true"></span>
+                        ✨ @T["CheckMyMatch"]
+                    </button>
+                    @if (Model.Profile?.CvReady != true)
+                    {
+                        <div class="small text-muted mt-2">@T["MatchNeedsCv"]</div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex gap-2 align-items-center mb-2">
+                    <partial name="_CompanyLogo" model="company" />
+                    <div>
+                        <div class="fw-semibold" dir="auto">@company.Name</div>
+                        <div class="small text-muted" dir="auto">@company.Industry</div>
+                    </div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(company.Description))
+                {
+                    <p class="small mb-2" dir="auto">@company.Description</p>
+                }
+                <a class="small" asp-controller="Companies" asp-action="Details" asp-route-id="@job.CompanyId">@T["ViewCompany"] →</a>
+            </div>
+        </div>
+    </aside>
+</div>

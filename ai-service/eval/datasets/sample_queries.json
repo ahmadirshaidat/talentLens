@@ -1,0 +1,108 @@
+{
+  "workspace_id": "eval",
+  "queries": [
+    {
+      "query": "Python developer with 5+ years of experience",
+      "relevant": {
+        "cv_01": 2,
+        "cv_07": 1,
+        "cv_08": 1
+      }
+    },
+    {
+      "query": ".NET developer C# SQL Server",
+      "relevant": {
+        "cv_02": 2,
+        "cv_10": 2
+      }
+    },
+    {
+      "query": "مطور .NET خبرة 5 سنوات",
+      "relevant": {
+        "cv_02": 2
+      }
+    },
+    {
+      "query": "frontend React developer",
+      "relevant": {
+        "cv_03": 2
+      }
+    },
+    {
+      "query": "مطور واجهات أمامية React",
+      "relevant": {
+        "cv_03": 2
+      }
+    },
+    {
+      "query": "machine learning data scientist",
+      "relevant": {
+        "cv_05": 2,
+        "cv_07": 1
+      }
+    },
+    {
+      "query": "محاسب خبرة في Excel",
+      "relevant": {
+        "cv_04": 2
+      }
+    },
+    {
+      "query": "sales manager with strong communication skills who speaks English",
+      "relevant": {
+        "cv_06": 2,
+        "cv_11": 1
+      }
+    },
+    {
+      "query": "DevOps engineer Kubernetes AWS",
+      "relevant": {
+        "cv_08": 2
+      }
+    },
+    {
+      "query": "Java Spring microservices",
+      "relevant": {
+        "cv_14": 2
+      }
+    },
+    {
+      "query": "أخصائي توظيف موارد بشرية",
+      "relevant": {
+        "cv_13": 2
+      }
+    },
+    {
+      "query": "project manager agile scrum",
+      "relevant": {
+        "cv_16": 2
+      }
+    },
+    {
+      "query": "mobile app developer Flutter",
+      "relevant": {
+        "cv_12": 2
+      }
+    },
+    {
+      "query": "UI UX designer Figma",
+      "relevant": {
+        "cv_15": 2,
+        "cv_03": 1
+      }
+    },
+    {
+      "query": "digital marketing SEO French",
+      "relevant": {
+        "cv_11": 2
+      }
+    },
+    {
+      "query": "data analyst Power BI SQL",
+      "relevant": {
+        "cv_07": 2,
+        "cv_05": 1
+      }
+    }
+  ]
+}

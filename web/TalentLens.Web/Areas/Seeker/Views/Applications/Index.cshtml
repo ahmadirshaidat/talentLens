@@ -1,0 +1,49 @@
+@model IReadOnlyList<JobApplication>
+@{
+    ViewData["Title"] = T["MyApplications"];
+    var steps = new[] { ApplicationStatus.Submitted, ApplicationStatus.Reviewed, ApplicationStatus.Shortlisted, ApplicationStatus.Interview, ApplicationStatus.Offered, ApplicationStatus.Hired };
+}
+
+<h1 class="h4 mb-4">@T["MyApplications"] <span class="text-muted fs-6">(@Model.Count)</span></h1>
+
+@foreach (var a in Model)
+{
+    var job = a.Job!;
+    var stepIndex = Array.IndexOf(steps, a.Status);
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body d-flex gap-3">
+            @if (job.Company is not null) { <partial name="_CompanyLogo" model="job.Company" /> }
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                    <div>
+                        <a asp-area="" asp-controller="Jobs" asp-action="Details" asp-route-id="@job.Id" class="fw-semibold" dir="auto">@job.Title</a>
+                        <div class="small text-muted" dir="auto">@job.Company?.Name · @T.F("AppliedAgo", T.Ago(a.AppliedAt))</div>
+                    </div>
+                    <partial name="_ApplicationStatusBadge" model="a.Status" />
+                </div>
+                @if (stepIndex >= 0)
+                {
+                    <div class="tl-steps mt-3" aria-label="progress">
+                        @for (var i = 0; i < steps.Length; i++)
+                        {
+                            <div class="tl-step-dot @(i <= stepIndex ? "done" : "")" title="@T[$"App{steps[i]}"]"></div>
+                        }
+                    </div>
+                }
+                @if (a.Status is not (ApplicationStatus.Withdrawn or ApplicationStatus.Rejected or ApplicationStatus.Hired))
+                {
+                    <form asp-action="Withdraw" asp-route-id="@a.Id" method="post" class="mt-2" data-confirm="@T["ConfirmWithdraw"]">
+                        <button class="btn btn-sm btn-link text-danger p-0">@T["Withdraw"]</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+}
+@if (Model.Count == 0)
+{
+    <div class="text-center text-muted py-5 border rounded-3 bg-white">
+        <p>@T["NoApplicationsYet"]</p>
+        <a class="btn btn-accent" asp-area="" asp-controller="Jobs" asp-action="Index">@T["FindJobs"]</a>
+    </div>
+}

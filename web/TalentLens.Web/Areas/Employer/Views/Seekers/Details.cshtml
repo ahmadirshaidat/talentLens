@@ -1,0 +1,43 @@
+@model SeekerViewModel
+@{
+    var p = Model.Profile;
+    ViewData["Title"] = p.DisplayName;
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 d-flex justify-content-between flex-wrap gap-3">
+        <div>
+            <h1 class="h4 mb-1" dir="auto">@p.DisplayName</h1>
+            <div class="text-muted" dir="auto">@p.Headline</div>
+            @if (!string.IsNullOrWhiteSpace(p.Summary))
+            {
+                <p class="mt-3 mb-0 tl-prewrap small" dir="auto">@p.Summary</p>
+            }
+        </div>
+        @if (p.HasCv)
+        {
+            <div><a class="btn btn-primary" asp-action="Cv" asp-route-id="@p.Id">📄 @T["DownloadCv"]</a></div>
+        }
+    </div>
+</div>
+
+@if (Model.ApplicationsToUs.Count > 0)
+{
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent"><strong>@T["AppliedToYourJobs"]</strong></div>
+        <ul class="list-group list-group-flush">
+            @foreach (var a in Model.ApplicationsToUs)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a asp-controller="Jobs" asp-action="Applicants" asp-route-id="@a.JobId" dir="auto">@a.Job!.Title</a>
+                    <span class="d-flex gap-2 align-items-center">
+                        @if (a.MatchScore is double s) { <span class="small text-muted">@((int)Math.Round(s * 100))%</span> }
+                        <partial name="_ApplicationStatusBadge" model="a.Status" />
+                    </span>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+<partial name="_ProfileFacts" model="p" />

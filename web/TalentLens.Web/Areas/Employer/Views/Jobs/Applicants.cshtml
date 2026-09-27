@@ -1,0 +1,109 @@
+@model ApplicantsViewModel
+@{
+    var job = Model.Job;
+    ViewData["Title"] = T["Applicants"] + " · " + job.Title;
+    var statuses = Enum.GetValues<ApplicationStatus>().Where(s => s != ApplicationStatus.Withdrawn).ToArray();
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">@T["MyJobs"]</a></li>
+        <li class="breadcrumb-item active" dir="auto">@job.Title</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h1 class="h4 mb-0" dir="auto">@job.Title</h1>
+        <div class="small text-muted">@T[$"Job{job.Status}"] · @T.F("ApplicantsCount", Model.Applications.Count)</div>
+    </div>
+    <form asp-action="Rank" asp-route-id="@job.Id" method="post" data-busy>
+        <button class="btn btn-accent">
+            <span class="spinner-border spinner-border-sm me-1 d-none" aria-hidden="true"></span>
+            ✨ @T["RankWithAi"]
+        </button>
+    </form>
+</div>
+<p class="small text-muted">@T["RankHint"]</p>
+
+<div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+    <ul class="nav nav-pills">
+        <li class="nav-item"><a class="nav-link py-1 @(Model.Status is null ? "active" : "")" asp-route-id="@job.Id" asp-route-sort="@Model.Sort">@T["All"]</a></li>
+        @foreach (var s in statuses)
+        {
+            <li class="nav-item"><a class="nav-link py-1 @(Model.Status == s ? "active" : "")" asp-route-id="@job.Id" asp-route-status="@s" asp-route-sort="@Model.Sort">@T[$"App{s}"]</a></li>
+        }
+    </ul>
+    <div class="ms-auto small">
+        @T["SortBy"]
+        <a asp-route-id="@job.Id" asp-route-status="@Model.Status" asp-route-sort="match" class="@(Model.Sort != "date" ? "fw-bold" : "")">@T["BestMatch"]</a> ·
+        <a asp-route-id="@job.Id" asp-route-status="@Model.Status" asp-route-sort="date" class="@(Model.Sort == "date" ? "fw-bold" : "")">@T["Newest"]</a>
+    </div>
+</div>
+
+@foreach (var a in Model.Applications)
+{
+    var p = a.SeekerProfile!;
+    <div class="card border-0 shadow-sm mb-3 tl-result">
+        <div class="card-body">
+            <div class="d-flex justify-content-between gap-3">
+                <div class="min-w-0">
+                    <a asp-controller="Seekers" asp-action="Details" asp-route-id="@p.Id" class="h6 text-decoration-none" dir="auto">@p.DisplayName</a>
+                    <div class="small text-muted" dir="auto">
+                        @string.Join(" · ", new[] { p.Headline, p.YearsOfExperience is double y ? T.Years(y) : null, p.Location }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                    </div>
+                    <div class="small text-muted">@T.F("AppliedAgo", T.Ago(a.AppliedAt))</div>
+                </div>
+                @if (a.MatchScore is double score)
+                {
+                    <partial name="_ScoreBar" model="score" />
+                }
+                else if (!p.CvReady)
+                {
+                    <span class="small text-muted">@T["CvNotReady"]</span>
+                }
+            </div>
+
+            @if (a.MatchScore is not null)
+            {
+                <div class="mt-3">
+                    <partial name="_Explanation" model="@(new CandidateResultDto(p.Id.ToString(), a.MatchScore.Value, a.MatchReason ?? "", a.MatchEvidence.Select(e => new EvidenceDto(e.Section, e.Quote)).ToList()))" />
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(a.CoverLetter))
+            {
+                <details class="small mt-2">
+                    <summary>@T["CoverLetter"]</summary>
+                    <p class="tl-prewrap mt-2 mb-0" dir="auto">@a.CoverLetter</p>
+                </details>
+            }
+
+            <form asp-action="SetStatus" method="post" class="row g-2 align-items-center mt-2">
+                <input type="hidden" name="applicationId" value="@a.Id" />
+                <div class="col-auto"><partial name="_ApplicationStatusBadge" model="a.Status" /></div>
+                @if (a.Status != ApplicationStatus.Withdrawn)
+                {
+                    <div class="col-sm-3">
+                        <select name="status" class="form-select form-select-sm" aria-label="@T["Status"]">
+                            @foreach (var s in statuses)
+                            {
+                                <option value="@s" selected="@(a.Status == s)">@T[$"App{s}"]</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col">
+                        <input name="note" value="@a.RecruiterNote" class="form-control form-control-sm" dir="auto" placeholder="@T["PrivateNote"]" maxlength="2000" />
+                    </div>
+                    <div class="col-auto"><button class="btn btn-sm btn-primary">@T["Update"]</button></div>
+                }
+                <div class="col-auto">
+                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Seekers" asp-action="Cv" asp-route-id="@p.Id">📄 @T["DownloadCv"]</a>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+@if (Model.Applications.Count == 0)
+{
+    <div class="text-center text-muted py-5 border rounded-3 bg-white">@T["NoApplicantsYet"]</div>
+}

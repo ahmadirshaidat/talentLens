@@ -1,0 +1,61 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = T["AdminOverview"];
+    var tiles = new (string Label, int Value, string Color)[]
+    {
+        (T["JobSeekers"], Model.Seekers, "primary"),
+        (T["Recruiters"], Model.Recruiters, "dark"),
+        (T["ActiveCompanies"], Model.CompaniesActive, "success"),
+        (T["PendingCompanies"], Model.CompaniesPending, "warning"),
+        (T["OpenJobs"], Model.JobsOpen, "primary"),
+        (T["Applications"], Model.Applications, "dark"),
+        (T["CvsProcessed"], Model.CvsProcessed, "success"),
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h1 class="h4 mb-0">@T["AdminOverview"]</h1>
+    <span class="badge @(Model.AiHealthy ? "text-bg-success" : "text-bg-danger")">@(Model.AiHealthy ? T["AiOnline"] : T["AiOffline"])</span>
+</div>
+
+<div class="row g-3 mb-4">
+    @foreach (var t in tiles)
+    {
+        <div class="col-6 col-md-4 col-xl">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">@t.Label</div>
+                    <div class="fs-3 fw-semibold text-@t.Color">@t.Value</div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent d-flex justify-content-between">
+        <strong>@T["AwaitingApproval"]</strong>
+        <a class="small" asp-controller="Companies" asp-action="Index" asp-route-status="Pending">@T["ViewAll"]</a>
+    </div>
+    <ul class="list-group list-group-flush">
+        @foreach (var c in Model.PendingCompanies)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <partial name="_CompanyLogo" model="c" />
+                    <div>
+                        <div class="fw-semibold" dir="auto">@c.Name</div>
+                        <div class="small text-muted" dir="auto">@c.Industry · @c.Location · @T.Ago(c.CreatedAt)</div>
+                    </div>
+                </div>
+                <form asp-controller="Companies" asp-action="Approve" asp-route-id="@c.Id" method="post">
+                    <button class="btn btn-sm btn-success">@T["Approve"]</button>
+                </form>
+            </li>
+        }
+        @if (Model.PendingCompanies.Count == 0)
+        {
+            <li class="list-group-item text-muted small">@T["NothingPending"]</li>
+        }
+    </ul>
+</div>

@@ -1,0 +1,130 @@
+@using Microsoft.Extensions.Options
+@using TalentLens.Infrastructure.Storage
+@inject IOptions<StorageOptions> StorageOptions
+@model SeekerProfilePageModel
+@{
+    ViewData["Title"] = T["MyProfile"];
+    var p = Model.Profile;
+}
+
+<h1 class="h4 mb-4">@T["MyProfile"]</h1>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent"><strong>@T["MyCv"]</strong></div>
+            <div class="card-body">
+                @if (p.HasCv)
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <a asp-action="Cv" class="text-break" dir="auto">📄 @p.CvOriginalFileName</a>
+                        @if (p.CvStatus is ProcessingStatus s) { <partial name="_StatusBadge" model="s" /> }
+                    </div>
+                    <div class="small text-muted mb-3">@T.Ago(p.CvUploadedAt ?? p.UpdatedAt)</div>
+                    @if (p.CvStatus == ProcessingStatus.Failed)
+                    {
+                        <div class="alert alert-danger small py-2">@p.CvError</div>
+                        <form asp-action="RetryCv" method="post" class="mb-3"><button class="btn btn-sm btn-outline-primary">@T["Reprocess"]</button></form>
+                    }
+                    else if (p.CvStatus is ProcessingStatus.Pending or ProcessingStatus.Processing)
+                    {
+                        <div class="alert alert-info small py-2" data-auto-refresh="4000">@T["CvProcessing"]</div>
+                    }
+                }
+                else
+                {
+                    <p class="small text-muted">@T["NoCvYet"]</p>
+                }
+                <form asp-action="UploadCv" method="post" enctype="multipart/form-data">
+                    <input type="file" name="file" accept=".pdf,.docx" class="form-control form-control-sm mb-2" required />
+                    <div class="small text-muted mb-2">@T.F("UploadHint", StorageOptions.Value.MaxUploadMb)</div>
+                    <button class="btn btn-primary btn-sm w-100">@(p.HasCv ? T["ReplaceCv"] : T["UploadCv"])</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="small text-muted">@T["ProfileStrength"]</div>
+                <div class="progress my-2" style="height:.4rem"><div class="progress-bar" style="width:@p.Completeness()%"></div></div>
+                <div class="small">@p.Completeness()%</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <form asp-action="Update" method="post" class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Edit.FullName" class="form-label">@T["FullName"]</label>
+                        <input asp-for="Edit.FullName" class="form-control" dir="auto" />
+                        <span asp-validation-for="Edit.FullName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Edit.Headline" class="form-label">@T["Headline"]</label>
+                        <input asp-for="Edit.Headline" class="form-control" dir="auto" placeholder="@T["HeadlinePlaceholder"]" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Edit.Phone" class="form-label">@T["Phone"]</label>
+                        <input asp-for="Edit.Phone" class="form-control" dir="ltr" />
+                    </div>
+                    <div class="col-md-5">
+                        <label asp-for="Edit.Location" class="form-label">@T["Location"]</label>
+                        <input asp-for="Edit.Location" class="form-control" dir="auto" />
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Edit.YearsOfExperience" class="form-label">@T["YearsExperience"]</label>
+                        <input asp-for="Edit.YearsOfExperience" class="form-control" step="0.5" min="0" />
+                        <span asp-validation-for="Edit.YearsOfExperience" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Edit.SkillsText" class="form-label">@T["Skills"]</label>
+                        <input asp-for="Edit.SkillsText" class="form-control" dir="auto" />
+                        <div class="form-text">@T["CommaSeparated"]</div>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Edit.LanguagesText" class="form-label">@T["Languages"]</label>
+                        <input asp-for="Edit.LanguagesText" class="form-control" dir="auto" />
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Edit.Summary" class="form-label">@T["About"]</label>
+                        <textarea asp-for="Edit.Summary" rows="4" class="form-control" dir="auto"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input asp-for="Edit.IsSearchable" class="form-check-input" role="switch" />
+                            <label asp-for="Edit.IsSearchable" class="form-check-label">@T["VisibleToRecruiters"]</label>
+                        </div>
+                        <div class="form-text">@T["VisibleToRecruitersHint"]</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent text-end">
+                <button class="btn btn-primary">@T["SaveProfile"]</button>
+            </div>
+        </form>
+
+        @if (p.Education.Count > 0 || p.JobTitles.Count > 0)
+        {
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-transparent"><strong>@T["FromYourCv"]</strong></div>
+                <div class="card-body small">
+                    @if (p.JobTitles.Count > 0)
+                    {
+                        <div class="mb-2"><span class="text-muted">@T["JobTitles"]:</span> <span dir="auto">@string.Join(" · ", p.JobTitles)</span></div>
+                    }
+                    @foreach (var e in p.Education)
+                    {
+                        <div dir="auto">🎓 @string.Join(" · ", new[] { e.Degree, e.Field, e.Institution, e.Year }.Where(x => !string.IsNullOrWhiteSpace(x)))</div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

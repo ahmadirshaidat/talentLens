@@ -1,0 +1,17 @@
+@model ProcessingStatus
+@{
+    var css = Model switch
+    {
+        ProcessingStatus.Ready => "text-bg-success",
+        ProcessingStatus.Processing => "text-bg-info",
+        ProcessingStatus.Failed => "text-bg-danger",
+        _ => "text-bg-secondary",
+    };
+}
+<span class="badge @css">
+    @if (Model is ProcessingStatus.Pending or ProcessingStatus.Processing)
+    {
+        <span class="spinner-grow spinner-grow-sm me-1" aria-hidden="true"></span>
+    }
+    @T[$"Status{Model}"]
+</span>

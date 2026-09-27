@@ -27,3 +27,9 @@ class LLMError(TalentLensError):
     """The LLM provider failed or returned an unusable response."""
 
     status_code = 502
+
+
+class CandidateNotFoundError(TalentLensError):
+    """The candidate has no indexed chunks in this workspace."""
+
+    status_code = 404

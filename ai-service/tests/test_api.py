@@ -14,6 +14,7 @@ from app.embeddings.embedder import Embedder, get_embedder
 from app.llm.client import get_llm_client
 from app.main import create_app
 from app.models import CandidateProfile, CandidateResult, Chunk, CVSection, Evidence
+from app.storage.profile_store import ProfileStore, get_profile_store
 from app.storage.vector_store import get_vector_store
 
 PROFILE = CandidateProfile(
@@ -61,6 +62,9 @@ def client(tmp_path, vector_store, fake_encoder, monkeypatch):
     app = create_app()
     app.dependency_overrides[get_settings] = lambda: settings
     app.dependency_overrides[get_vector_store] = lambda: vector_store
+    profile_store = ProfileStore(tmp_path / "profiles")
+    app.dependency_overrides[get_profile_store] = lambda: profile_store
+    app.state.test_profile_store = profile_store
     app.dependency_overrides[get_embedder] = lambda: Embedder("fake", model=fake_encoder)
     app.dependency_overrides[get_llm_client] = lambda: SimpleNamespace()
     with TestClient(app) as c:
@@ -111,6 +115,7 @@ def test_ingest_indexes_chunks_and_returns_profile(
     assert bm25.workspace_id == "ws1"
     assert bm25.deleted == ["c1"]  # re-ingest clears old chunks first
     assert [c.chunk_id for c in bm25.added] == ["c1-0"]
+    assert client.app.state.test_profile_store.get("ws1", "c1") == PROFILE
 
 
 def test_ingest_unsupported_file(client):
@@ -208,3 +213,12 @@ def test_delete_candidate(client, vector_store):
     assert response.status_code == 204
     assert vector_store.count("ws1") == 0
     assert FakeBM25.instances[-1].deleted == ["c1"]
+
+
+def test_delete_candidate_removes_profile(client):
+    store = client.app.state.test_profile_store
+    store.put("ws1", "c1", PROFILE)
+
+    client.delete("/candidates/c1", params={"workspace_id": "ws1"})
+
+    assert store.get("ws1", "c1") is None

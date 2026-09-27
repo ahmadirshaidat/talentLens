@@ -1,0 +1,76 @@
+@model IReadOnlyList<EmployerJobRow>
+@{
+    ViewData["Title"] = T["MyJobs"];
+    var status = ViewData["Status"] as JobStatus?;
+    var active = ViewData["CompanyActive"] as bool? ?? false;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h1 class="h4 mb-0">@T["MyJobs"]</h1>
+    <a class="btn btn-accent" asp-action="Create">+ @T["PostJob"]</a>
+</div>
+
+@if (!active)
+{
+    <div class="alert alert-warning small">@T["CompanyNotApproved"]</div>
+}
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link @(status is null ? "active" : "")" asp-action="Index">@T["All"]</a></li>
+    @foreach (var s in Enum.GetValues<JobStatus>())
+    {
+        <li class="nav-item"><a class="nav-link @(status == s ? "active" : "")" asp-action="Index" asp-route-status="@s">@T[$"Job{s}"]</a></li>
+    }
+</ul>
+
+<div class="table-responsive shadow-sm rounded-3">
+    <table class="table align-middle mb-0 bg-white">
+        <thead class="table-light">
+            <tr>
+                <th>@T["JobTitle"]</th>
+                <th>@T["Status"]</th>
+                <th>@T["Applicants"]</th>
+                <th class="d-none d-md-table-cell">@T["Posted"]</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model)
+            {
+                var j = row.Job;
+                <tr>
+                    <td>
+                        <a asp-action="Applicants" asp-route-id="@j.Id" class="fw-semibold" dir="auto">@j.Title</a>
+                        <div class="small text-muted" dir="auto">@j.Location · @T[$"Type{j.EmploymentType}"]</div>
+                    </td>
+                    <td><span class="badge @(j.Status == JobStatus.Open ? "text-bg-success" : j.Status == JobStatus.Draft ? "text-bg-secondary" : "text-bg-light border")">@T[$"Job{j.Status}"]</span></td>
+                    <td>
+                        <a asp-action="Applicants" asp-route-id="@j.Id">@row.Applicants</a>
+                        @if (row.NewApplicants > 0) { <span class="badge text-bg-warning ms-1">@T.F("NewCount", row.NewApplicants)</span> }
+                    </td>
+                    <td class="d-none d-md-table-cell small text-muted">@(j.PublishedAt is DateTime d ? T.Ago(d) : "—")</td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@j.Id">@T["Edit"]</a>
+                        @if (j.Status == JobStatus.Open)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" asp-area="" asp-controller="Jobs" asp-action="Details" asp-route-id="@j.Id">@T["View"]</a>
+                            <form asp-action="Close" asp-route-id="@j.Id" method="post" class="d-inline" data-confirm="@T["ConfirmCloseJob"]">
+                                <button class="btn btn-sm btn-outline-danger">@T["CloseJob"]</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-action="Publish" asp-route-id="@j.Id" method="post" class="d-inline">
+                                <button class="btn btn-sm btn-primary">@T[j.Status == JobStatus.Closed ? "Reopen" : "Publish"]</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted py-4">@T["NoJobsPosted"]</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

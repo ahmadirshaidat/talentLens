@@ -1,0 +1,66 @@
+@model IReadOnlyList<AdminCompanyRow>
+@{
+    ViewData["Title"] = T["Companies"];
+    var status = ViewData["Status"] as CompanyStatus?;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h1 class="h4 mb-0">@T["Companies"] <span class="text-muted fs-6">(@Model.Count)</span></h1>
+    <form method="get" class="d-flex gap-2">
+        <input type="hidden" name="status" value="@status" />
+        <input type="search" name="q" value="@ViewData["Q"]" class="form-control form-control-sm" dir="auto" placeholder="@T["SearchCompanies"]" />
+        <button class="btn btn-sm btn-primary">@T["Search"]</button>
+    </form>
+</div>
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link @(status is null ? "active" : "")" asp-action="Index">@T["All"]</a></li>
+    @foreach (var s in Enum.GetValues<CompanyStatus>())
+    {
+        <li class="nav-item"><a class="nav-link @(status == s ? "active" : "")" asp-action="Index" asp-route-status="@s">@T[$"CompanyStatus{s}"]</a></li>
+    }
+</ul>
+
+<div class="table-responsive shadow-sm rounded-3">
+    <table class="table align-middle mb-0 bg-white">
+        <thead class="table-light">
+            <tr>
+                <th>@T["Company"]</th>
+                <th>@T["Status"]</th>
+                <th>@T["Recruiters"]</th>
+                <th>@T["Jobs"]</th>
+                <th>@T["Applications"]</th>
+                <th class="d-none d-md-table-cell">@T["Joined"]</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model)
+            {
+                var c = row.Company;
+                <tr>
+                    <td>
+                        <div class="fw-semibold" dir="auto">@c.Name</div>
+                        <div class="small text-muted" dir="auto">@c.Industry · @c.Location</div>
+                    </td>
+                    <td><span class="badge @(c.Status == CompanyStatus.Active ? "text-bg-success" : c.Status == CompanyStatus.Pending ? "text-bg-warning" : "text-bg-danger")">@T[$"CompanyStatus{c.Status}"]</span></td>
+                    <td>@row.Recruiters</td>
+                    <td>@row.Jobs</td>
+                    <td>@row.Applicants</td>
+                    <td class="d-none d-md-table-cell small text-muted">@c.CreatedAt.ToLocalTime().ToString("d")</td>
+                    <td class="text-end text-nowrap">
+                        @if (c.Status != CompanyStatus.Active)
+                        {
+                            <form asp-action="Approve" asp-route-id="@c.Id" method="post" class="d-inline"><button class="btn btn-sm btn-success">@T[c.Status == CompanyStatus.Pending ? "Approve" : "Reactivate"]</button></form>
+                        }
+                        @if (c.Status != CompanyStatus.Suspended)
+                        {
+                            <form asp-action="Suspend" asp-route-id="@c.Id" method="post" class="d-inline" data-confirm="@T["ConfirmSuspend"]"><button class="btn btn-sm btn-outline-danger">@T["Suspend"]</button></form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (Model.Count == 0) { <tr><td colspan="7" class="text-center text-muted py-4">@T["NoCompanies"]</td></tr> }
+        </tbody>
+    </table>
+</div>

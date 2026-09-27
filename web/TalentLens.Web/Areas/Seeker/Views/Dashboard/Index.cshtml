@@ -1,0 +1,87 @@
+@model SeekerDashboardViewModel
+@{
+    ViewData["Title"] = T["MyDashboard"];
+    var p = Model.Profile;
+    var completeness = p.Completeness();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h1 class="h4 mb-0">@T.F("HelloName", p.FullName ?? User.GetDisplayName())</h1>
+        <div class="text-muted small" dir="auto">@p.Headline</div>
+    </div>
+    <a class="btn btn-accent" asp-area="" asp-controller="Jobs" asp-action="Index">@T["FindJobs"]</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="small text-muted">@T["ProfileStrength"]</div>
+                <div class="fs-3 fw-semibold">@completeness%</div>
+                <div class="progress mb-2" style="height:.4rem"><div class="progress-bar" style="width:@completeness%"></div></div>
+                @if (!p.HasCv)
+                {
+                    <a asp-controller="Profile" asp-action="Index" class="small">@T["UploadCvToStart"] →</a>
+                }
+                else if (completeness < 100)
+                {
+                    <a asp-controller="Profile" asp-action="Index" class="small">@T["CompleteProfile"] →</a>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-4 col-md-2">
+        <a class="card border-0 shadow-sm h-100 text-decoration-none" asp-controller="Applications" asp-action="Index">
+            <div class="card-body"><div class="small text-muted">@T["Applications"]</div><div class="fs-3 fw-semibold">@Model.ApplicationCount</div></div>
+        </a>
+    </div>
+    <div class="col-4 col-md-2">
+        <a class="card border-0 shadow-sm h-100 text-decoration-none" asp-controller="Applications" asp-action="Index">
+            <div class="card-body"><div class="small text-muted">@T["InterviewsOffers"]</div><div class="fs-3 fw-semibold text-success">@Model.InterviewCount</div></div>
+        </a>
+    </div>
+    <div class="col-4 col-md-4">
+        <a class="card border-0 shadow-sm h-100 text-decoration-none" asp-controller="SavedJobs" asp-action="Index">
+            <div class="card-body"><div class="small text-muted">@T["SavedJobs"]</div><div class="fs-3 fw-semibold">@Model.SavedCount</div></div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <h2 class="h5 mb-3">@T["RecommendedForYou"]</h2>
+        @foreach (var r in Model.Recommendations)
+        {
+            <partial name="_JobCard" model="r.Job" />
+        }
+        @if (Model.Recommendations.Count == 0)
+        {
+            <div class="text-muted border rounded-3 p-4 bg-white">@T["NoRecommendations"]</div>
+        }
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent d-flex justify-content-between">
+                <strong>@T["RecentApplications"]</strong>
+                <a class="small" asp-controller="Applications" asp-action="Index">@T["ViewAll"]</a>
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var a in Model.RecentApplications)
+                {
+                    <li class="list-group-item">
+                        <a asp-area="" asp-controller="Jobs" asp-action="Details" asp-route-id="@a.JobId" class="fw-semibold" dir="auto">@a.Job!.Title</a>
+                        <div class="d-flex justify-content-between small">
+                            <span class="text-muted" dir="auto">@a.Job!.Company?.Name</span>
+                            <partial name="_ApplicationStatusBadge" model="a.Status" />
+                        </div>
+                    </li>
+                }
+                @if (Model.RecentApplications.Count == 0)
+                {
+                    <li class="list-group-item text-muted small">@T["NoApplicationsYet"]</li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

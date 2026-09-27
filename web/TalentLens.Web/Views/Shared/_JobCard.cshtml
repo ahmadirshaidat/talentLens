@@ -1,0 +1,57 @@
+@model Job
+@{
+    var saved = ViewData["Saved"] as bool? ?? false;
+    var applied = ViewData["Applied"] as bool? ?? false;
+    var showSave = User.IsInRole(AppRoles.JobSeeker);
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+<div class="card tl-job-card border-0 shadow-sm mb-3">
+    <div class="card-body d-flex gap-3">
+        @if (Model.Company is not null)
+        {
+            <partial name="_CompanyLogo" model="Model.Company" />
+        }
+        <div class="flex-grow-1 min-w-0">
+            <div class="d-flex justify-content-between gap-2">
+                <a asp-area="" asp-controller="Jobs" asp-action="Details" asp-route-id="@Model.Id"
+                   class="h6 mb-1 text-decoration-none stretched-link-sm" dir="auto">@Model.Title</a>
+                @if (showSave)
+                {
+                    <form asp-area="" asp-controller="Jobs" asp-action="ToggleSave" asp-route-id="@Model.Id" method="post" class="flex-shrink-0">
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <button class="btn btn-sm btn-link p-0 tl-save @(saved ? "saved" : "")" title="@T[saved ? "Unsave" : "Save"]">
+                            @(saved ? "★" : "☆")
+                        </button>
+                    </form>
+                }
+            </div>
+            <div class="small text-muted mb-2" dir="auto">
+                @if (Model.Company is not null)
+                {
+                    <a asp-area="" asp-controller="Companies" asp-action="Details" asp-route-id="@Model.CompanyId" class="text-muted">@Model.Company.Name</a>
+                    <span> · </span>
+                }
+                @(Model.Location ?? T["WorkplaceRemote"])
+            </div>
+            <div class="d-flex flex-wrap gap-1 align-items-center">
+                <span class="badge tl-tag">@T[$"Type{Model.EmploymentType}"]</span>
+                <span class="badge tl-tag">@T[$"Workplace{Model.WorkplaceType}"]</span>
+                @if (Model.MinYearsExperience is int y && y > 0)
+                {
+                    <span class="badge tl-tag">@T.F("YearsPlus", y)</span>
+                }
+                @foreach (var s in Model.Skills.Take(4))
+                {
+                    <span class="badge rounded-pill tl-chip">@s</span>
+                }
+                <span class="ms-auto small text-muted">
+                    @if (applied)
+                    {
+                        <span class="badge text-bg-success me-1">@T["AppliedBadge"]</span>
+                    }
+                    @T.Ago(Model.PublishedAt ?? Model.CreatedAt)
+                </span>
+            </div>
+        </div>
+    </div>
+</div>

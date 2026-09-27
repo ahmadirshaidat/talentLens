@@ -1,0 +1,13 @@
+@model ApplicationStatus
+@{
+    var css = Model switch
+    {
+        ApplicationStatus.Submitted => "text-bg-secondary",
+        ApplicationStatus.Reviewed => "text-bg-light border",
+        ApplicationStatus.Shortlisted or ApplicationStatus.Interview => "text-bg-info",
+        ApplicationStatus.Offered or ApplicationStatus.Hired => "text-bg-success",
+        ApplicationStatus.Rejected => "text-bg-danger",
+        _ => "text-bg-light border text-muted",
+    };
+}
+<span class="badge @css">@T[$"App{Model}"]</span>

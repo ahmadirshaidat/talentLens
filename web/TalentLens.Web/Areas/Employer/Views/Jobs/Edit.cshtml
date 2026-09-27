@@ -1,0 +1,77 @@
+@model JobEditModel
+@{
+    ViewData["Title"] = Model.Id is null ? T["PostJob"] : T["EditJob"];
+}
+
+<h1 class="h4 mb-4">@ViewData["Title"]</h1>
+
+<form asp-action="Save" method="post" class="card border-0 shadow-sm">
+    <input type="hidden" asp-for="Id" />
+    <div class="card-body p-4">
+        <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label asp-for="Title" class="form-label">@T["JobTitle"] *</label>
+                <input asp-for="Title" class="form-control" dir="auto" placeholder="@T["JobTitlePlaceholder"]" />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Location" class="form-label">@T["Location"]</label>
+                <input asp-for="Location" class="form-control" dir="auto" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="EmploymentType" class="form-label">@T["JobType"]</label>
+                <select asp-for="EmploymentType" class="form-select">
+                    @foreach (var t in Enum.GetValues<EmploymentType>()) { <option value="@t">@T[$"Type{t}"]</option> }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="WorkplaceType" class="form-label">@T["Workplace"]</label>
+                <select asp-for="WorkplaceType" class="form-select">
+                    @foreach (var w in Enum.GetValues<WorkplaceType>()) { <option value="@w">@T[$"Workplace{w}"]</option> }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="MinYearsExperience" class="form-label">@T["MinYears"]</label>
+                <input asp-for="MinYearsExperience" class="form-control" min="0" />
+                <span asp-validation-for="MinYearsExperience" class="text-danger small"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Description" class="form-label">@T["JobDescription"] *</label>
+                <textarea asp-for="Description" rows="6" class="form-control" dir="auto"></textarea>
+                <span asp-validation-for="Description" class="text-danger small"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Requirements" class="form-label">@T["Requirements"]</label>
+                <textarea asp-for="Requirements" rows="4" class="form-control" dir="auto"></textarea>
+            </div>
+            <div class="col-12">
+                <label asp-for="SkillsText" class="form-label">@T["RequiredSkills"]</label>
+                <input asp-for="SkillsText" class="form-control" dir="auto" placeholder="Python, SQL, …" />
+                <div class="form-text">@T["SkillsHintAi"]</div>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="SalaryMin" class="form-label">@T["SalaryFrom"]</label>
+                <input asp-for="SalaryMin" class="form-control" min="0" />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="SalaryMax" class="form-label">@T["SalaryTo"]</label>
+                <input asp-for="SalaryMax" class="form-control" min="0" />
+                <span asp-validation-for="SalaryMax" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Currency" class="form-label">@T["Currency"]</label>
+                <input asp-for="Currency" class="form-control" dir="ltr" />
+            </div>
+        </div>
+    </div>
+    <div class="card-footer bg-transparent d-flex justify-content-end gap-2">
+        <a class="btn btn-link" asp-action="Index">@T["Cancel"]</a>
+        <button class="btn btn-outline-primary" name="Publish" value="false">@T["SaveDraft"]</button>
+        <button class="btn btn-accent" name="Publish" value="true">@T["SaveAndPublish"]</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

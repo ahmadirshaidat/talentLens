@@ -1,0 +1,13 @@
+@model CandidateResultDto
+@if (!string.IsNullOrWhiteSpace(Model.Reason))
+{
+    <p class="mb-2" dir="auto">@Model.Reason</p>
+}
+@foreach (var e in Model.Evidence)
+{
+    <blockquote class="tl-evidence mb-2 d-flex align-items-baseline gap-2">
+        <span class="badge text-bg-light border flex-shrink-0">@T.Section(e.Section)</span>
+        @* The quote keeps its own direction: an English line stays LTR inside an Arabic page. *@
+        <q dir="auto">@e.Quote</q>
+    </blockquote>
+}

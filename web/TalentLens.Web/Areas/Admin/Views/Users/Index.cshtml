@@ -1,0 +1,57 @@
+@model AdminUsersViewModel
+@{
+    ViewData["Title"] = T["Users"];
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h1 class="h4 mb-0">@T["Users"] <span class="text-muted fs-6">(@Model.Users.Count)</span></h1>
+    <form method="get" class="d-flex gap-2">
+        <input type="hidden" name="role" value="@Model.Role" />
+        <input type="search" name="q" value="@Model.Q" class="form-control form-control-sm" placeholder="@T["SearchUsers"]" />
+        <button class="btn btn-sm btn-primary">@T["Search"]</button>
+    </form>
+</div>
+
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link @(string.IsNullOrEmpty(Model.Role) ? "active" : "")" asp-action="Index" asp-route-q="@Model.Q">@T["All"]</a></li>
+    @foreach (var r in AppRoles.All)
+    {
+        <li class="nav-item"><a class="nav-link @(Model.Role == r ? "active" : "")" asp-action="Index" asp-route-role="@r" asp-route-q="@Model.Q">@T[$"Role{r}"]</a></li>
+    }
+</ul>
+
+<div class="table-responsive shadow-sm rounded-3">
+    <table class="table align-middle mb-0 bg-white">
+        <thead class="table-light">
+            <tr>
+                <th>@T["Name"]</th>
+                <th>@T["Email"]</th>
+                <th>@T["Role"]</th>
+                <th class="d-none d-md-table-cell">@T["Company"]</th>
+                <th class="d-none d-md-table-cell">@T["Joined"]</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model.Users)
+            {
+                <tr class="@(u.IsLocked ? "table-secondary" : "")">
+                    <td dir="auto">@u.DisplayName @if (u.IsLocked) { <span class="badge text-bg-danger ms-1">@T["Locked"]</span> }</td>
+                    <td dir="ltr" class="small">@u.Email</td>
+                    <td><span class="badge tl-tag">@(string.IsNullOrEmpty(u.Role) ? "—" : T[$"Role{u.Role}"])</span></td>
+                    <td class="d-none d-md-table-cell small" dir="auto">@(u.CompanyName ?? "—")</td>
+                    <td class="d-none d-md-table-cell small text-muted">@u.CreatedAt.ToLocalTime().ToString("d")</td>
+                    <td class="text-end">
+                        @if (u.Id != User.GetUserId())
+                        {
+                            <form asp-action="Lock" asp-route-id="@u.Id" method="post" class="d-inline">
+                                <input type="hidden" name="locked" value="@(!u.IsLocked)" />
+                                <button class="btn btn-sm @(u.IsLocked ? "btn-outline-success" : "btn-outline-danger")">@T[u.IsLocked ? "Unlock" : "Lock"]</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

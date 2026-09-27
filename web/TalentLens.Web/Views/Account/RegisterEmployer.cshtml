@@ -1,0 +1,61 @@
+@model RegisterEmployerViewModel
+@{
+    ViewData["Title"] = T["RegisterAsEmployer"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h4 mb-1">@T["CreateEmployerAccount"]</h1>
+                <p class="text-muted small mb-4">@T["CreateEmployerHint"]</p>
+                <form asp-action="RegisterEmployer" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2" role="alert"></div>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label asp-for="CompanyName" class="form-label">@T["CompanyName"]</label>
+                            <input asp-for="CompanyName" class="form-control" autocomplete="organization" dir="auto" />
+                            <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label asp-for="Industry" class="form-label">@T["Industry"]</label>
+                            <input asp-for="Industry" class="form-control" dir="auto" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label asp-for="FullName" class="form-label">@T["YourName"]</label>
+                            <input asp-for="FullName" class="form-control" autocomplete="name" dir="auto" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label asp-for="Location" class="form-label">@T["Location"]</label>
+                            <input asp-for="Location" class="form-control" dir="auto" />
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Email" class="form-label">@T["WorkEmail"]</label>
+                            <input asp-for="Email" class="form-control" autocomplete="username" dir="ltr" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label asp-for="Password" class="form-label">@T["Password"]</label>
+                            <input asp-for="Password" class="form-control" autocomplete="new-password" dir="ltr" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label asp-for="ConfirmPassword" class="form-label">@T["ConfirmPassword"]</label>
+                            <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" dir="ltr" />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-accent w-100 mt-4">@T["CreateEmployerAccount"]</button>
+                </form>
+                <hr />
+                <p class="mb-1 small text-center">@T["HaveAccount"] <a asp-action="Login">@T["Login"]</a></p>
+                <p class="mb-0 small text-center">@T["LookingForJob"] <a asp-action="Register">@T["Register"]</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

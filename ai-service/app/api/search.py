@@ -29,7 +29,7 @@ class ExplainRequest(BaseModel):
 
 @router.post("/search", response_model=list[CandidateResult])
 def search(request: SearchRequest) -> list[CandidateResult]:
-    return pipeline.search(  # MANUAL
+    return pipeline.search(
         workspace_id=request.workspace_id,
         query=request.query,
         top_k=request.top_k,
@@ -42,7 +42,7 @@ def explain(
     request: ExplainRequest,
     llm: Annotated[LLMClient, Depends(get_llm_client)],
 ) -> CandidateResult:
-    return explain_candidate(  # MANUAL
+    return explain_candidate(
         candidate_id=request.candidate_id,
         workspace_id=request.workspace_id,
         query=request.query,

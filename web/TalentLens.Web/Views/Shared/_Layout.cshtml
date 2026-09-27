@@ -1,47 +1,145 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+@{
+    var rtl = T.IsArabic;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var area = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    string Active(string a, string c) => area == a && controller == c ? "active" : "";
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var isSeeker = User.IsInRole(AppRoles.JobSeeker);
+    var isRecruiter = User.IsInRole(AppRoles.Recruiter);
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+}
+<html lang="@(rtl ? "ar" : "en")" dir="@(rtl ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TalentLens.Web</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@ViewData["Title"] · TalentLens</title>
+    @if (rtl)
+    {
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    }
+    else
+    {
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    }
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/TalentLens.Web.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TalentLens.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+<body class="d-flex flex-column min-vh-100">
+    <header class="tl-header sticky-top">
+        <nav class="navbar navbar-expand-lg">
+            <div class="container">
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span class="tl-logo">◎</span> TalentLens
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto">
+                        @if (isRecruiter)
+                        {
+                            <li class="nav-item"><a class="nav-link @Active("Employer", "Dashboard")" asp-area="Employer" asp-controller="Dashboard" asp-action="Index">@T["Dashboard"]</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Employer", "Jobs")" asp-area="Employer" asp-controller="Jobs" asp-action="Index">@T["MyJobs"]</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Employer", "Search")" asp-area="Employer" asp-controller="Search" asp-action="Index">@T["CvSearch"]</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Employer", "Candidates")" asp-area="Employer" asp-controller="Candidates" asp-action="Index">@T["TalentPool"]</a></li>
+                        }
+                        else if (isAdmin)
+                        {
+                            <li class="nav-item"><a class="nav-link @Active("Admin", "Dashboard")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@T["Overview"]</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Admin", "Companies")" asp-area="Admin" asp-controller="Companies" asp-action="Index">@T["Companies"]</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Admin", "Users")" asp-area="Admin" asp-controller="Users" asp-action="Index">@T["Users"]</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("Admin", "Jobs")" asp-area="Admin" asp-controller="Jobs" asp-action="Index">@T["Jobs"]</a></li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link @Active("", "Jobs")" asp-area="" asp-controller="Jobs" asp-action="Index">@T["FindJobs"]</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("", "Companies")" asp-area="" asp-controller="Companies" asp-action="Index">@T["Companies"]</a></li>
+                            @if (isSeeker)
+                            {
+                                <li class="nav-item"><a class="nav-link @Active("Seeker", "Applications")" asp-area="Seeker" asp-controller="Applications" asp-action="Index">@T["MyApplications"]</a></li>
+                                <li class="nav-item"><a class="nav-link @Active("Seeker", "SavedJobs")" asp-area="Seeker" asp-controller="SavedJobs" asp-action="Index">@T["SavedJobs"]</a></li>
+                            }
+                        }
                     </ul>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <form asp-area="" asp-controller="Home" asp-action="SetLanguage" method="post" class="d-inline">
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <input type="hidden" name="culture" value="@(rtl ? UiText.English : UiText.Arabic)" />
+                            <button type="submit" class="btn btn-sm btn-link text-decoration-none tl-lang" title="Language">
+                                @(rtl ? "English" : "العربية")
+                            </button>
+                        </form>
+                        @if (signedIn)
+                        {
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="tl-avatar">@(User.GetDisplayName().FirstOrDefault())</span>
+                                    @User.GetDisplayName()
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    @if (isSeeker)
+                                    {
+                                        <li><a class="dropdown-item" asp-area="Seeker" asp-controller="Dashboard" asp-action="Index">@T["MyDashboard"]</a></li>
+                                        <li><a class="dropdown-item" asp-area="Seeker" asp-controller="Profile" asp-action="Index">@T["MyProfile"]</a></li>
+                                    }
+                                    @if (isRecruiter)
+                                    {
+                                        <li><a class="dropdown-item" asp-area="Employer" asp-controller="Company" asp-action="Index">@T["CompanyProfile"]</a></li>
+                                        <li><a class="dropdown-item" asp-area="Employer" asp-controller="Jobs" asp-action="Create">@T["PostJob"]</a></li>
+                                    }
+                                    @if (isAdmin && Context.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+                                    {
+                                        <li><a class="dropdown-item" href="/hangfire">@T["BackgroundJobs"]</a></li>
+                                    }
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                                            <button type="submit" class="dropdown-item">@T["Logout"]</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a class="btn btn-sm btn-link text-decoration-none" asp-area="" asp-controller="Account" asp-action="Login">@T["Login"]</a>
+                            <a class="btn btn-sm btn-primary" asp-area="" asp-controller="Account" asp-action="Register">@T["Register"]</a>
+                            <a class="btn btn-sm btn-accent" asp-area="" asp-controller="Home" asp-action="Employers">@T["ForEmployers"]</a>
+                        }
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - TalentLens.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <main role="main" class="flex-grow-1 pb-5">
+        @if (IsSectionDefined("Hero"))
+        {
+            @RenderSection("Hero")
+        }
+        <div class="container pt-4">
+            <partial name="_Alerts" />
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="tl-footer py-4 mt-4">
+        <div class="container d-flex flex-wrap justify-content-between gap-3 small">
+            <div>
+                <div class="fw-semibold"><span class="tl-logo">◎</span> TalentLens</div>
+                <div class="text-muted">@T["Tagline"]</div>
+            </div>
+            <div class="d-flex gap-3">
+                <a asp-area="" asp-controller="Jobs" asp-action="Index">@T["FindJobs"]</a>
+                <a asp-area="" asp-controller="Companies" asp-action="Index">@T["Companies"]</a>
+                <a asp-area="" asp-controller="Home" asp-action="Employers">@T["ForEmployers"]</a>
+            </div>
+            <div class="text-muted">&copy; @DateTime.UtcNow.Year TalentLens</div>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

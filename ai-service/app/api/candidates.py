@@ -1,4 +1,4 @@
-"""DELETE /candidates/{candidate_id} — remove a candidate from vectors + BM25."""
+"""DELETE /candidates/{candidate_id} — remove a candidate from vectors, BM25 and profiles."""
 
 from typing import Annotated
 
@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Path, Query, Response, status
 
 from app.api.common import SafeId
 from app.retrieval.bm25_index import BM25Index
+from app.storage.profile_store import ProfileStore, get_profile_store
 from app.storage.vector_store import VectorStore, get_vector_store
 
 router = APIRouter(tags=["candidates"])
@@ -16,7 +17,9 @@ def delete_candidate(
     candidate_id: Annotated[SafeId, Path()],
     workspace_id: Annotated[SafeId, Query()],
     store: Annotated[VectorStore, Depends(get_vector_store)],
+    profiles: Annotated[ProfileStore, Depends(get_profile_store)],
 ) -> Response:
     store.delete_candidate(workspace_id, candidate_id)
-    BM25Index(workspace_id).delete_candidate(candidate_id)  # MANUAL
+    BM25Index(workspace_id).delete_candidate(candidate_id)
+    profiles.delete(workspace_id, candidate_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

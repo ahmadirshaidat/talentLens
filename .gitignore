@@ -23,9 +23,11 @@ obj/
 .vs/
 *.user
 web/TalentLens.Web/wwwroot/uploads/
+web/TalentLens.Web/App_Data/
 
 # --- Editors / OS ---
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+web/*.local.txt

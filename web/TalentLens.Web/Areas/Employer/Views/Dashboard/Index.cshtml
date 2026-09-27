@@ -1,0 +1,98 @@
+@model EmployerDashboardViewModel
+@{
+    ViewData["Title"] = T["Dashboard"];
+    var tiles = new (string Label, int Value, string Color, string Action, string Controller)[]
+    {
+        (T["OpenJobs"], Model.OpenJobs, "primary", "Index", "Jobs"),
+        (T["Applicants"], Model.TotalApplicants, "dark", "Index", "Jobs"),
+        (T["NewApplicants"], Model.NewApplicants, "accent", "Index", "Jobs"),
+        (T["TalentPool"], Model.TalentPool, "success", "Index", "Candidates"),
+    };
+}
+
+@if (Model.Company.Status != CompanyStatus.Active)
+{
+    <div class="alert alert-warning">
+        <strong>@T[$"Company{Model.Company.Status}Title"]</strong>
+        <div class="small">@T[$"Company{Model.Company.Status}Text"]</div>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+        <partial name="_CompanyLogo" model="Model.Company" />
+        <div>
+            <h1 class="h4 mb-0" dir="auto">@Model.Company.Name</h1>
+            <div class="small text-muted">@T["EmployerDashboard"]</div>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-controller="Search" asp-action="Index">🔎 @T["CvSearch"]</a>
+        <a class="btn btn-accent" asp-controller="Jobs" asp-action="Create">+ @T["PostJob"]</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    @foreach (var t in tiles)
+    {
+        <div class="col-6 col-lg-3">
+            <a class="card border-0 shadow-sm text-decoration-none h-100" asp-controller="@t.Controller" asp-action="@t.Action">
+                <div class="card-body">
+                    <div class="text-muted small">@t.Label</div>
+                    <div class="fs-2 fw-semibold text-@t.Color">@t.Value</div>
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent d-flex justify-content-between">
+                <strong>@T["MyJobs"]</strong>
+                <a class="small" asp-controller="Jobs" asp-action="Index">@T["ViewAll"]</a>
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var row in Model.Jobs)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                        <div>
+                            <a asp-controller="Jobs" asp-action="Applicants" asp-route-id="@row.Job.Id" class="fw-semibold" dir="auto">@row.Job.Title</a>
+                            <div class="small text-muted">@T[$"Job{row.Job.Status}"] · @T.Ago(row.Job.PublishedAt ?? row.Job.CreatedAt)</div>
+                        </div>
+                        <div class="text-end small">
+                            <div>@T.F("ApplicantsCount", row.Applicants)</div>
+                            @if (row.NewApplicants > 0) { <span class="badge text-bg-warning">@T.F("NewCount", row.NewApplicants)</span> }
+                        </div>
+                    </li>
+                }
+                @if (Model.Jobs.Count == 0)
+                {
+                    <li class="list-group-item text-muted">@T["NoJobsPosted"] <a asp-controller="Jobs" asp-action="Create">@T["PostJob"]</a></li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><strong>@T["RecentApplicants"]</strong></div>
+            <ul class="list-group list-group-flush">
+                @foreach (var a in Model.RecentApplications)
+                {
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <a asp-controller="Seekers" asp-action="Details" asp-route-id="@a.SeekerProfileId" class="fw-semibold" dir="auto">@a.SeekerProfile!.DisplayName</a>
+                            <partial name="_ApplicationStatusBadge" model="a.Status" />
+                        </div>
+                        <div class="small text-muted" dir="auto">@a.Job!.Title · @T.Ago(a.AppliedAt)</div>
+                    </li>
+                }
+                @if (Model.RecentApplications.Count == 0)
+                {
+                    <li class="list-group-item text-muted small">@T["NoApplicantsYet"]</li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,11 @@
+@model double
+@{
+    var pct = (int)Math.Round(Math.Clamp(Model, 0, 1) * 100);
+    var tone = pct >= 70 ? "high" : pct >= 40 ? "mid" : "low";
+}
+<div class="tl-score tl-score-@tone text-end" title="@T["MatchScore"]">
+    <div class="fw-bold fs-5">@pct%</div>
+    <div class="progress" role="progressbar" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar" style="width: @pct%"></div>
+    </div>
+</div>

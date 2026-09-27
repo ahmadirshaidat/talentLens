@@ -1,0 +1,6 @@
+@model Company
+@{
+    // A stable colour per company, from its name.
+    var hue = (int)(Model.Name.Aggregate(7u, (h, ch) => h * 31 + ch) % 360);
+}
+<span class="tl-company-logo" style="--tl-hue: @hue" aria-hidden="true">@Model.Initials</span>

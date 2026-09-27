@@ -15,6 +15,7 @@ from app.llm.client import LLMClient, get_llm_client
 from app.models import CandidateProfile
 from app.parsing.parser import parse_document
 from app.retrieval.bm25_index import BM25Index
+from app.storage.profile_store import ProfileStore, get_profile_store
 from app.storage.vector_store import VectorStore, get_vector_store
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ def ingest(
     settings: Annotated[Settings, Depends(get_settings)],
     embedder: Annotated[Embedder, Depends(get_embedder)],
     store: Annotated[VectorStore, Depends(get_vector_store)],
+    profiles: Annotated[ProfileStore, Depends(get_profile_store)],
     llm: Annotated[LLMClient, Depends(get_llm_client)],
 ) -> CandidateProfile:
     max_bytes = settings.max_upload_mb * 1024 * 1024
@@ -38,19 +40,20 @@ def ingest(
 
     parsed = parse_document(data, file.filename or "upload")
 
-    sections = detect_sections(parsed.text)  # MANUAL
-    chunks = chunk_sections(sections, candidate_id, workspace_id)  # MANUAL
+    sections = detect_sections(parsed.text)
+    chunks = chunk_sections(sections, candidate_id, workspace_id)
 
     # Extract before indexing so an LLM failure doesn't leave a half-indexed candidate.
-    profile = extract_profile(parsed.text, llm)  # MANUAL
+    profile = extract_profile(parsed.text, llm)
 
     # Re-ingesting the same candidate replaces their previous chunks.
-    bm25 = BM25Index(workspace_id)  # MANUAL
+    bm25 = BM25Index(workspace_id)
     store.delete_candidate(workspace_id, candidate_id)
     bm25.delete_candidate(candidate_id)
 
     store.add_chunks(chunks, embedder.embed_documents([c.text for c in chunks]))
     bm25.add(chunks)
+    profiles.put(workspace_id, candidate_id, profile)
 
     logger.info(
         "Ingested candidate %s (workspace %s): %d chunks", candidate_id, workspace_id, len(chunks)

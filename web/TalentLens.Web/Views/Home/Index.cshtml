@@ -1,8 +1,94 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model HomeViewModel
+@{
+    ViewData["Title"] = T["FindJobs"];
+    var popular = new[] { "Python", ".NET", "React", "Data Scientist", "محاسب", "Marketing", "DevOps", "مدير مبيعات" };
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@section Hero {
+    <section class="tl-hero-band">
+        <div class="container py-5">
+            <h1 class="display-6 fw-bold mb-2">@T["HeroTitle"]</h1>
+            <p class="lead mb-4 tl-narrow">@T["HeroText"]</p>
+            <form asp-controller="Jobs" asp-action="Index" method="get" class="tl-searchbar shadow">
+                <div class="row g-0">
+                    <div class="col-md-6">
+                        <input name="q" class="form-control form-control-lg border-0" dir="auto"
+                               placeholder="@T["JobKeywordPlaceholder"]" aria-label="@T["JobKeywordPlaceholder"]" />
+                    </div>
+                    <div class="col-md-4 tl-divider">
+                        <input name="location" class="form-control form-control-lg border-0" dir="auto"
+                               placeholder="@T["LocationPlaceholder"]" aria-label="@T["Location"]" />
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button class="btn btn-accent btn-lg" type="submit">@T["SearchJobs"]</button>
+                    </div>
+                </div>
+            </form>
+            <div class="mt-3 small">
+                <span class="opacity-75 me-1">@T["PopularSearches"]</span>
+                @foreach (var p in popular)
+                {
+                    <a class="badge rounded-pill tl-hero-chip text-decoration-none me-1" asp-controller="Jobs" asp-action="Index" asp-route-q="@p" dir="auto">@p</a>
+                }
+            </div>
+            <div class="d-flex gap-4 mt-4 tl-stats">
+                <div><strong>@Model.JobCount</strong> @T["OpenJobs"]</div>
+                <div><strong>@Model.CompanyCount</strong> @T["HiringCompanies"]</div>
+                <div><strong>@Model.SeekerCount</strong> @T["JobSeekers"]</div>
+            </div>
+        </div>
+    </section>
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 mb-0">@T["LatestJobs"]</h2>
+            <a asp-controller="Jobs" asp-action="Index">@T["ViewAllJobs"] →</a>
+        </div>
+        @foreach (var job in Model.LatestJobs)
+        {
+            <partial name="_JobCard" model="job" />
+        }
+        @if (Model.LatestJobs.Count == 0)
+        {
+            <div class="text-muted border rounded-3 p-4 bg-white">@T["NoJobsYet"]</div>
+        }
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent"><strong>@T["TopCompanies"]</strong></div>
+            <ul class="list-group list-group-flush">
+                @foreach (var c in Model.TopCompanies)
+                {
+                    <li class="list-group-item d-flex align-items-center gap-2">
+                        <partial name="_CompanyLogo" model="c.Company" />
+                        <div class="flex-grow-1">
+                            <a asp-controller="Companies" asp-action="Details" asp-route-id="@c.Company.Id" class="fw-semibold" dir="auto">@c.Company.Name</a>
+                            <div class="small text-muted" dir="auto">@c.Company.Industry</div>
+                        </div>
+                        <span class="badge tl-tag">@T.F("JobsCount", c.OpenJobs)</span>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        @if (!User.Identity!.IsAuthenticated)
+        {
+            <div class="card border-0 shadow-sm tl-cta mb-4">
+                <div class="card-body">
+                    <h3 class="h6">@T["SeekerCtaTitle"]</h3>
+                    <p class="small mb-3">@T["SeekerCtaText"]</p>
+                    <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Register">@T["CreateFreeProfile"]</a>
+                </div>
+            </div>
+            <div class="card border-0 shadow-sm tl-cta-employer">
+                <div class="card-body">
+                    <h3 class="h6">@T["EmployerCtaTitle"]</h3>
+                    <p class="small mb-3">@T["EmployerCtaText"]</p>
+                    <a class="btn btn-accent btn-sm" asp-controller="Account" asp-action="RegisterEmployer">@T["PostJobFree"]</a>
+                </div>
+            </div>
+        }
+    </div>
 </div>

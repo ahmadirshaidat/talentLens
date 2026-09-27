@@ -1,0 +1,35 @@
+@model CompanyDetailsViewModel
+@{
+    var c = Model.Company;
+    ViewData["Title"] = c.Name;
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 d-flex gap-3 align-items-start">
+        <partial name="_CompanyLogo" model="c" />
+        <div>
+            <h1 class="h4 mb-1" dir="auto">@c.Name</h1>
+            <div class="text-muted small mb-2" dir="auto">
+                @string.Join(" · ", new[] { c.Industry, c.Location, c.Size is null ? null : T.F("Employees", c.Size) }.Where(x => !string.IsNullOrWhiteSpace(x)))
+            </div>
+            @if (!string.IsNullOrWhiteSpace(c.Website))
+            {
+                <a href="@c.Website" rel="noopener nofollow" target="_blank" class="small" dir="ltr">@c.Website</a>
+            }
+            @if (!string.IsNullOrWhiteSpace(c.Description))
+            {
+                <p class="mt-3 mb-0 tl-prewrap" dir="auto">@c.Description</p>
+            }
+        </div>
+    </div>
+</div>
+
+<h2 class="h5 mb-3">@T.F("OpenJobsAt", c.Name)</h2>
+@foreach (var job in Model.Jobs)
+{
+    <partial name="_JobCard" model="job" />
+}
+@if (Model.Jobs.Count == 0)
+{
+    <div class="text-muted border rounded-3 p-4 bg-white">@T["NoOpenJobs"]</div>
+}

@@ -1,0 +1,114 @@
+@model CvSearchViewModel
+@{
+    ViewData["Title"] = T["CvSearch"];
+    var examples = new[] { "Python developer with 5+ years of experience", "مطور .NET خبرة 5 سنوات", "sales manager who speaks English", "مصمم واجهات Figma" };
+}
+
+<h1 class="h4 mb-3">@T["CvSearch"]</h1>
+
+<form method="get" class="mb-3">
+    <div class="btn-group mb-2" role="group" aria-label="@T["SearchIn"]">
+        @foreach (var s in Enum.GetValues<SearchScope>())
+        {
+            <input type="radio" class="btn-check" name="scope" id="scope-@s" value="@s" checked="@(Model.Scope == s)" autocomplete="off" />
+            <label class="btn btn-outline-primary btn-sm" for="scope-@s">@T[$"Scope{s}"]</label>
+        }
+    </div>
+    <div class="input-group input-group-lg shadow-sm">
+        <input type="search" name="q" value="@Model.Query" class="form-control" dir="auto" autofocus
+               placeholder="@T["SearchPlaceholder"]" aria-label="@T["Search"]" maxlength="2000" />
+        <select name="top" class="form-select flex-grow-0 w-auto" aria-label="@T["TopK"]">
+            @foreach (var n in new[] { 5, 10, 20, 50 })
+            {
+                <option value="@n" selected="@(Model.TopK == n)">@T.F("TopN", n)</option>
+            }
+        </select>
+        <button class="btn btn-primary" type="submit" id="search-button">
+            <span class="spinner-border spinner-border-sm me-1 d-none" aria-hidden="true"></span>
+            @T["Search"]
+        </button>
+    </div>
+    <div class="form-text">@T[$"Scope{Model.Scope}Hint"]</div>
+</form>
+
+@if (!Model.Searched)
+{
+    <div class="mb-4">
+        <span class="small text-muted me-1">@T["TryExamples"]</span>
+        @foreach (var ex in examples)
+        {
+            <a class="badge rounded-pill tl-chip text-decoration-none me-1" dir="auto" asp-route-q="@ex" asp-route-scope="@Model.Scope">@ex</a>
+        }
+    </div>
+}
+
+@if (Model.Error is not null)
+{
+    <div class="alert alert-warning"><strong>@T["SearchFailed"]</strong><div class="small">@Model.Error</div></div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-9">
+        @if (Model.Searched && Model.Error is null)
+        {
+            <p class="text-muted small">@T.F("ResultsFor", Model.Hits.Count) <span dir="auto">“@Model.Query”</span></p>
+            @if (Model.Hits.Count == 0)
+            {
+                <div class="text-center text-muted py-5 border rounded-3 bg-white">@T["NoResults"]</div>
+            }
+            @for (var i = 0; i < Model.Hits.Count; i++)
+            {
+                var h = Model.Hits[i];
+                <div class="card border-0 shadow-sm mb-3 tl-result">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <span class="tl-rank">#@(i + 1)</span>
+                                @if (h.Scope == SearchScope.TalentPool)
+                                {
+                                    <a asp-controller="Candidates" asp-action="Details" asp-route-id="@h.Id" class="h5 mb-0 text-decoration-none" dir="auto">@h.Name</a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Seekers" asp-action="Details" asp-route-id="@h.Id" class="h5 mb-0 text-decoration-none" dir="auto">@h.Name</a>
+                                }
+                                <div class="small text-muted mt-1" dir="auto">
+                                    @string.Join(" · ", new[] { h.Title, h.Years is double y ? T.Years(y) : null, h.Location }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                                </div>
+                            </div>
+                            <partial name="_ScoreBar" model="h.Score" />
+                        </div>
+                        <div class="mt-3" id="explain-@h.Id">
+                            <partial name="_Explanation" model="@(new CandidateResultDto(h.Id.ToString(), h.Score, h.Reason, h.Evidence))" />
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <div><partial name="_Chips" model="h.Skills.Take(6)" /></div>
+                            <button type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+                                    data-ajax-post="@Url.Action("Explain", new { id = h.Id, scope = h.Scope, q = Model.Query })"
+                                    data-ajax-target="#explain-@h.Id">
+                                <span class="spinner-border spinner-border-sm me-1 d-none" aria-hidden="true"></span>
+                                @T["WhyCandidate"]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+            @Html.AntiForgeryToken()
+        }
+    </div>
+    <div class="col-lg-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><strong>@T["RecentSearches"]</strong></div>
+            <ul class="list-group list-group-flush small">
+                @foreach (var s in Model.RecentSearches)
+                {
+                    <li class="list-group-item">
+                        <a asp-route-q="@s.Query" asp-route-scope="@s.Scope" dir="auto">@s.Query</a>
+                        <div class="text-muted">@T[$"Scope{s.Scope}"]</div>
+                    </li>
+                }
+                @if (Model.RecentSearches.Count == 0) { <li class="list-group-item text-muted">@T["NoSearchesYet"]</li> }
+            </ul>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,38 @@
+@model IExtractedProfile
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><strong>@T["Contact"]</strong></div>
+            <dl class="card-body mb-0 tl-dl">
+                <dt>@T["Email"]</dt><dd dir="ltr">@(Model.Email ?? "—")</dd>
+                <dt>@T["Phone"]</dt><dd dir="ltr">@(Model.Phone ?? "—")</dd>
+                <dt>@T["Location"]</dt><dd dir="auto">@(Model.Location ?? "—")</dd>
+                <dt>@T["Experience"]</dt><dd>@(Model.YearsOfExperience is double y ? T.Years(y) : "—")</dd>
+            </dl>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><strong>@T["Skills"]</strong></div>
+            <div class="card-body">
+                @if (Model.Skills.Count > 0) { <partial name="_Chips" model="Model.Skills" /> } else { <span class="text-muted">—</span> }
+            </div>
+        </div>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><strong>@T["Languages"]</strong></div>
+            <div class="card-body">
+                @if (Model.Languages.Count > 0) { <partial name="_Chips" model="Model.Languages" /> } else { <span class="text-muted">—</span> }
+            </div>
+        </div>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><strong>@T["Education"]</strong></div>
+            <ul class="list-group list-group-flush">
+                @foreach (var e in Model.Education)
+                {
+                    <li class="list-group-item small" dir="auto">🎓 @string.Join(" · ", new[] { e.Degree, e.Field, e.Institution, e.Year }.Where(x => !string.IsNullOrWhiteSpace(x)))</li>
+                }
+                @if (Model.Education.Count == 0) { <li class="list-group-item text-muted">—</li> }
+            </ul>
+        </div>
+    </div>
+</div>

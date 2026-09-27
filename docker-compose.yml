@@ -1,0 +1,78 @@
+# Full stack: SQL Server + AI service + web app.
+#   cp ai-service/.env.example ai-service/.env   (optionally set LLM_* for LLM extraction)
+#   export AI_SERVICE_API_KEY=<random secret>    (shared by web → ai-service)
+#   export SQL_SA_PASSWORD=<strong password>
+#   docker compose up --build
+#   open http://localhost:8080
+# First start downloads the embedding + reranker models (~4.5 GB) into the ai_models volume.
+#
+# Malware scanning of uploads (recommended outside development):
+#   MALWARE_SCANNER=ClamAV docker compose --profile scan up --build
+# ClamAV needs ~1.5 GB RAM and a few minutes to load its signatures on first start.
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SQL_SA_PASSWORD:?Set SQL_SA_PASSWORD}"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  ai-service:
+    build: ./ai-service
+    env_file:
+      - path: ./ai-service/.env
+        required: false
+    environment:
+      ENVIRONMENT: production
+      SERVICE_API_KEY: "${AI_SERVICE_API_KEY:?Set AI_SERVICE_API_KEY}"
+      DATA_DIR: /app/data
+      CHROMA_DIR: /app/data/chroma
+      BM25_DIR: /app/data/bm25
+      PROFILES_DIR: /app/data/profiles
+    ports:
+      - "8000:8000"
+    volumes:
+      - ai_data:/app/data
+      - ai_models:/models
+
+  web:
+    build: ./web
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Default: "Server=sqlserver;Database=TalentLens;User Id=sa;Password=${SQL_SA_PASSWORD:?Set SQL_SA_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      AiService__BaseUrl: http://ai-service:8000
+      AiService__ApiKey: "${AI_SERVICE_API_KEY:?Set AI_SERVICE_API_KEY}"
+      Security__MalwareScanning__Provider: "${MALWARE_SCANNER:-None}"
+      Security__MalwareScanning__Host: clamav
+      Security__MalwareScanning__Port: "3310"
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/app/App_Data
+
+  clamav:
+    image: clamav/clamav:stable
+    profiles: ["scan"]
+    volumes:
+      - clamav_db:/var/lib/clamav
+
+volumes:
+  sql_data:
+  ai_data:
+  ai_models:
+  uploads:
+  clamav_db:
